@@ -8,7 +8,7 @@ Provide clear and helpful responses.
 """
 
 
-def build_prompt(context: str) -> str:
+def build_prompt(context: str, instruction: str) -> str:
     """
     Builds the final prompt sent to the LLM
     """
@@ -18,6 +18,9 @@ def build_prompt(context: str) -> str:
 
 Context:
 {context}
+
+Instruction:
+{instruction}
 
 Assistant:
 """
