@@ -24,7 +24,8 @@ def generate_response(prompt: str) -> str:
             ]
         )
 
-        return response.choices[0].message.content
+        content = response.choices[0].message.content
+        return content or ""
 
     except Exception as e:
         return f"Error generating response: {e}"
