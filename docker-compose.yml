@@ -1,0 +1,35 @@
+services:
+  vis_sys_qwen:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: vis_sys_qwen:latest
+    container_name: vis_sys_qwen
+    
+    # Environment variables
+    environment:
+      - HF_TOKEN=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
+      - CAMERA_INDEX=${CAMERA_INDEX:-0}
+      - DISPLAY=${DISPLAY:-:0}
+      - XAUTHORITY=${XAUTHORITY:-/root/.Xauthority}
+    
+    # Interactive mode for camera feed
+    stdin_open: true
+    tty: true
+    
+    # Restart policy
+    restart: "no"
+    
+    # Run as root to access camera (or use group_add for video group)
+    user: root
+    
+    # Camera device access (Linux)
+    devices:
+      - /dev/video0:/dev/video0
+      - /dev/video1:/dev/video1
+    
+    # === LINUX: GUI display support ===
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      - ${XAUTHORITY:-~/.Xauthority}:/root/.Xauthority:ro
+    network_mode: host
