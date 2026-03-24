@@ -5,6 +5,7 @@ import logging
 import threading
 from queue import Queue, Empty
 from vision_engine import VisionEngine, VisionEngineError
+from dotenv import load_dotenv
 
 
 # Configure logging

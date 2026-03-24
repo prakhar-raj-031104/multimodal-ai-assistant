@@ -6,6 +6,7 @@ from openai import OpenAI, OpenAIError, APIError, APIConnectionError, RateLimitE
 from typing import Optional
 
 
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
@@ -56,7 +57,7 @@ class VisionEngine:
         self.timeout = timeout
         
         # Get API token from environment
-        api_key = os.environ.get("HF_TOKEN")
+        api_key = "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"
         if not api_key:
             raise APIConfigurationError(
                 "HF_TOKEN environment variable not set. "
