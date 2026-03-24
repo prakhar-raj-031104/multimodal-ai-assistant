@@ -1,21 +1,46 @@
-from brain.context_builder import build_context
-from brain.prompt_manager import build_prompt
-from brain.llm_engine import generate_response
+from brain.assistant import process_user_query
 
+
+def get_mock_inputs():
+    """
+    Simulate inputs from different modules
+    """
+
+    vision_data = "Image shows a mathematical equation on a whiteboard"
+    memory_data = "User is learning physics"
+    instruction = "Explain clearly in simple terms"
+
+    return vision_data, memory_data, instruction
+from brain.assistant import process_user_query
 
 def main():
+
+    conversation_history = []
 
     while True:
 
         user_input = input("User: ")
 
-        context = build_context(user_input)
+        # Mock inputs (clean way)
+        vision_data, memory_data, instruction = get_mock_inputs()
 
-        prompt = build_prompt(context)
+        # Convert history list → string
+        history_text = "\n".join(conversation_history)
 
-        response = generate_response(prompt)
+        # Call your LLM pipeline
+        response = process_user_query(
+            user_input=user_input,
+            conversation_history=history_text,
+            vision_data=vision_data,
+            memory_data=memory_data,
+            instruction=instruction
+        )
 
-        print("AI:", response)
+        print("AI:", response["response"])
+
+        # Update history (IMPORTANT)
+        conversation_history.append(f"User: {user_input}")
+        conversation_history.append(f"AI: {response}")
 
 
 if __name__ == "__main__":
