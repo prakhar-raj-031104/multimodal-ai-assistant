@@ -80,7 +80,7 @@ sudo apt install ffmpeg
 Create a `.env` file in root directory:
 
 ```
-HUGGINGFACE_API_KEY=your_hf_token_here
+HF_TOKEN=your_hf_token_here
 GROQ_API_KEY=your_groq_api_key_here
 ```
 
