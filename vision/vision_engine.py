@@ -36,7 +36,7 @@ class APIRequestError(VisionEngineError):
 
 class VisionEngine:
     def __init__(self, base_url: str = "https://router.huggingface.co/v1", 
-                 model: str = "Qwen/Qwen2.5-VL-7B-Instruct:hyperbolic",
+                 model: str = "Qwen/Qwen2.5-VL-72B-Instruct",
                  max_tokens: int = 800,
                  timeout: float = 30.0):
         """
