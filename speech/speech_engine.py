@@ -17,7 +17,7 @@ class SpeechEngine:
         """
         Record audio from mic and save to temp file
         """
-        print("🎤 Recording... Speak now")
+        print("Recording... Speak now")
 
         recording = sd.rec(
             int(self.duration * self.sample_rate),
@@ -30,7 +30,7 @@ class SpeechEngine:
         temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".wav")
         write(temp_file.name, self.sample_rate, recording)
 
-        print(f"✅ Saved audio: {temp_file.name}")
+        print(f" Saved audio: {temp_file.name}")
         return temp_file.name
 
     def transcribe(self) -> str:
@@ -39,8 +39,8 @@ class SpeechEngine:
         """
         audio_path = self.record_audio()
 
-        print("🧠 Converting speech to text...")
+        print(" Converting speech to text...")
         text = self.stt.transcribe(audio_path)
 
-        print(f"📝 You said: {text}")
+        print(f" You said: {text}")
         return text

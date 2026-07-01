@@ -69,12 +69,12 @@ class CameraSystem:
     # =========================
     # 🔥 MULTI-FRAME CAPTURE (FIXED + SAFE)
     # =========================
-    def capture_and_analyze(self, num_frames=1):
+    def capture_and_analyze(self, num_frames=10):
 
         if self.cap is None or not self.cap.isOpened():
             raise CameraNotAccessibleError("Camera is not initialized")
 
-        # ✅ Warmup (kept from your code)
+        # Warmup (kept from  the code)
         for _ in range(10):
             self.cap.read()
         time.sleep(0.5)
@@ -85,7 +85,7 @@ class CameraSystem:
             ret, frame = self.cap.read()
 
             if not ret:
-                logger.warning(f"⚠️ Frame {i} capture failed")
+                logger.warning(f"Frame {i} capture failed")
                 continue
 
             try:
@@ -93,12 +93,12 @@ class CameraSystem:
             except:
                 continue
 
-            logger.info(f"📸 Capturing frame {i+1}/{num_frames}")
+            logger.info(f"Capturing frame {i+1}/{num_frames}")
 
             try:
                 result = self.vision.analyze_frame(frame)
 
-                # ✅ CLEAN JSON (your version + safer)
+                # CLEAN JSON (your version + safer)
                 try:
                     cleaned = result.strip()
 
@@ -111,22 +111,22 @@ class CameraSystem:
                     result = json.loads(cleaned.strip())
 
                 except Exception as e:
-                    logger.warning(f"⚠️ JSON parse failed: {e}")
+                    logger.warning(f" JSON parse failed: {e}")
                     result = {"raw": result}
 
                 results.append(result)
 
-                # ✅ STOP early (optimization)
+                # STOP early (optimization)
                 break
 
             except Exception as e:
-                logger.error(f"❌ Vision error on frame {i}: {str(e)}")
+                logger.error(f"Vision error on frame {i}: {str(e)}")
 
         return self._aggregate_results(results)
 
-    # =========================
-    # 🔥 AGGREGATION (FIXED)
-    # =========================
+    
+    
+    #  AGGREGATION (FIXED)
     def _aggregate_results(self, results):
 
         if not results:
@@ -159,7 +159,7 @@ class CameraSystem:
             if res.get("motion_detected"):
                 aggregated["motion_detected"] = True
 
-        # ✅ FIX: safe deduplication (no dict error)
+        # FIX: safe deduplication (no dict error)
         def deduplicate(items):
             seen = set()
             unique = []
@@ -179,11 +179,10 @@ class CameraSystem:
 
         return aggregated
 
-    # =========================
+    
     # EXISTING STREAM (UNCHANGED)
-    # =========================
     def _process_frames_worker(self):
-        logger.info("🔄 Vision processing thread started")
+        logger.info(" Vision processing thread started")
 
         while self.running:
             try:
@@ -192,7 +191,7 @@ class CameraSystem:
                 if frame is None:
                     continue
 
-                logger.info("🧠 Processing frame in background...")
+                logger.info(" Processing frame in background...")
 
                 try:
                     result = self.vision.analyze_frame(frame)
@@ -206,20 +205,20 @@ class CameraSystem:
                     except:
                         pass
 
-                    logger.info("✅ Frame processing complete")
+                    logger.info(" Frame processing complete")
 
                 except Exception as e:
-                    logger.error(f"❌ Vision error: {str(e)}")
+                    logger.error(f" Vision error: {str(e)}")
 
                 self.frame_queue.task_done()
 
             except Empty:
                 continue
             except Exception as e:
-                logger.error(f"❌ Thread error: {str(e)}")
+                logger.error(f" Thread error: {str(e)}")
 
     def process_stream(self):
-        print("🚀 Camera started... Press 'q' to exit")
+        print("Camera started... Press 'q' to exit")
 
         self.running = True
         self.processing_thread = threading.Thread(
@@ -264,7 +263,7 @@ class CameraSystem:
             self.cap.release()
 
         cv2.destroyAllWindows()
-        print("🛑 Camera stopped")
+        print(" Camera stopped")
 
 
 if __name__ == "__main__":

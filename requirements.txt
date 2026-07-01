@@ -1,49 +1,35 @@
-annotated-types==0.7.0
-anyio==4.12.1
-certifi==2026.2.25
-cffi==2.0.0
-charset-normalizer==3.4.5
-cryptography==46.0.5
-distro==1.9.0
-google-ai-generativelanguage==0.6.15
-google-api-core==2.30.0
-google-api-python-client==2.192.0
-google-auth==2.49.1
-google-auth-httplib2==0.3.0
-google-genai==1.67.0
-googleapis-common-protos==1.73.0
-groq==1.1.1
-grpcio==1.78.0
-grpcio-status==1.71.2
-h11==0.16.0
-httpcore==1.0.9
-httplib2==0.31.2
-httpx==0.28.1
-huggingface_hub
-idna==3.11
-jiter==0.13.0
-librosa==0.11.0
-mistral-common[audio]>=1.9.0
-numpy==2.4.3
-openai==2.29.0
-opencv-python==4.13.0.92
-pillow==12.1.1
-proto-plus==1.27.1
-protobuf==5.29.6
-pyasn1==0.6.2
-pyasn1_modules==0.4.2
-pycparser==3.0
-pydantic==2.12.5
-pydantic_core==2.41.5
-pyparsing==3.3.2
-python-dotenv==1.2.2
-requests==2.32.5
-sniffio==1.3.1
-soundfile==0.13.1
-tenacity==9.1.4
-tqdm==4.67.3
-typing-inspection==0.4.2
-typing_extensions==4.15.0
-uritemplate==4.2.0
-urllib3==2.6.3
-websockets==16.0
+# ---------------------------------------------------------------------------
+# Real-time multimodal second-brain assistant — dependencies
+# ---------------------------------------------------------------------------
+# CORE (required). The system runs with just these; every optional dep below
+# has a graceful fallback so nothing here hard-fails at import time.
+# ---------------------------------------------------------------------------
+groq>=1.1.1                 # LLM + Whisper STT + PlayAI TTS (single fast cloud path)
+python-dotenv>=1.2.2
+numpy>=1.26
+requests>=2.32
+sounddevice>=0.4.6         # continuous mic capture + audio playback
+scipy>=1.11                # wav helpers
+openai>=2.0                # OpenAI-compatible client for the HF vision router
+opencv-python>=4.9         # camera + scene-change detection
+pillow>=10
+
+# ---------------------------------------------------------------------------
+# RECOMMENDED — big quality/latency wins, install if you can.
+# ---------------------------------------------------------------------------
+anthropic>=0.40           # Claude LLM provider (LLM_PROVIDER=anthropic) — strongest reasoning
+sentence-transformers>=2.6 # real semantic memory embeddings (vs hash fallback)
+silero-vad>=5.0            # accurate voice-activity detection (needs torch)
+torch>=2.1                 # Silero VAD + local Whisper (GPU accelerates both)
+
+# ---------------------------------------------------------------------------
+# OPTIONAL — extra backends / features (each degrades gracefully if absent).
+# ---------------------------------------------------------------------------
+# faster-whisper>=1.0       # low-latency LOCAL STT (offline alternative to Groq)
+# openai-whisper            # simplest local STT fallback
+# openwakeword>=0.6         # "Hey Jarvis" wake-word gating
+# webrtcvad>=2.0            # lightweight CPU VAD (fallback if no torch)
+# pyttsx3>=2.90             # fully-offline TTS fallback
+# fastembed>=0.3            # fast ONNX embeddings (alt to sentence-transformers)
+# faiss-cpu>=1.8            # scales the vector store beyond ~5k memories
+# gradio>=4.0               # optional live dashboard UI (ui/gradio_app.py)

@@ -14,6 +14,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
+
 class VisionEngineError(Exception):
     """Base exception for vision engine errors"""
     pass
