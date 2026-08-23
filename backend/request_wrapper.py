@@ -6,4 +6,4 @@ class MultimodalRequest:
     user_input: Optional[str] = None
     vision_data: Optional[Dict] = None
     audio_data: Optional[str] = None
-    memory_data: Optional[str] = None                                                                                                       architecture
+    memory_data: Optional[str] = None

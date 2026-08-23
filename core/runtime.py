@@ -129,12 +129,14 @@ class Assistant:
             if not self._running:
                 break
             wake.feed(frame)
-            # Barge-in: user starts talking while we're speaking -> cut TTS.
-            if self._speaking and seg.just_started(state):
-                self.tts.interrupt()
-
             segment = seg.process(frame, state)
-            seg.just_started(state)  # clear one-shot flag if not consumed
+            # Barge-in: user starts talking while we're speaking -> cut TTS.
+            # Must be read AFTER process(), which is what sets the flag; reading
+            # it before (and clearing it after) meant it never fired.
+            started = seg.just_started(state)
+            if started and self._speaking:
+                log.debug("barge-in detected — cutting playback")
+                self.tts.interrupt()
             if segment is None:
                 continue
             if not wake.is_active():

@@ -11,6 +11,7 @@ no temp files touch disk on the hot path.
 from __future__ import annotations
 
 import io
+import os
 import wave
 from typing import Optional
 
@@ -105,3 +106,25 @@ class STT:
         audio = np.frombuffer(pcm, dtype=np.int16).astype(np.float32) / 32768.0
         result = self._local.transcribe(audio, language=self.cfg.language, fp16=False)
         return result["text"].strip()
+
+    def transcribe_file(self, path: str) -> str:
+        """Transcribe an audio file (wav/mp3/m4a) — used by the browser mic in the UI."""
+        try:
+            if self._backend == "groq":
+                with open(path, "rb") as f:
+                    data = f.read()
+                resp = self._groq.audio.transcriptions.create(
+                    file=(os.path.basename(path), data, "audio/wav"),
+                    model=self.cfg.groq_model,
+                    language=self.cfg.language,
+                    response_format="text",
+                )
+                return (resp if isinstance(resp, str) else getattr(resp, "text", "")).strip()
+            if self._backend == "faster_whisper":
+                segments, _ = self._local.transcribe(path, language=self.cfg.language)
+                return " ".join(s.text for s in segments).strip()
+            result = self._local.transcribe(path, language=self.cfg.language, fp16=False)
+            return result["text"].strip()
+        except Exception as e:  # noqa
+            log.error("STT file transcription failed: %s", e)
+            return ""

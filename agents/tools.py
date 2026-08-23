@@ -61,8 +61,18 @@ def build_default_registry(memory=None) -> ToolRegistry:
     def recall_memory(query: str) -> str:
         if memory is None:
             return "memory unavailable"
-        facts = (memory.retrieve(query).get("facts") or [])
-        return "\n".join(f"- {f}" for f in facts) if facts else "no relevant memory found"
+        facts = (memory.retrieve(query, force=True).get("facts") or [])
+        if facts:
+            return "\n".join(f"- {f['text']}" for f in facts)
+        # Nothing matched semantically. For a meta-question ("what did I ask you
+        # to remember?") the wording never matches the stored fact, so fall back
+        # to recency — labelled, so the model doesn't treat it as a hit.
+        recent = memory.recent_facts(limit=5)
+        if not recent:
+            return "no memories stored yet"
+        lines = "\n".join(f"- {f['text']}" for f in recent)
+        return ("no direct match; the most recently recorded memories are:\n"
+                + lines)
 
     reg.register(
         _schema("recall_memory",

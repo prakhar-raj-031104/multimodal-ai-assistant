@@ -113,9 +113,12 @@ class VisionStream:
     def _to_perception(self, raw: str) -> Perception:
         data = _extract_json(raw)
         summary = data.get("scene_summary") if isinstance(data, dict) else None
+        if isinstance(summary, (list, dict)):
+            summary = json.dumps(summary)
         if not summary:
-            summary = (raw or "").strip()[:400]
-        return Perception(summary=summary, raw=data if isinstance(data, dict) else {"text": raw})
+            summary = _clean_summary(raw)[:400]
+        return Perception(summary=str(summary).strip(),
+                          raw=data if isinstance(data, dict) else {"text": raw})
 
     def stop(self) -> None:
         self._running = False
@@ -125,16 +128,51 @@ class VisionStream:
 
 
 def _extract_json(text: str) -> dict:
+    """Parse the VLM's JSON, tolerating the three ways it usually arrives dirty:
+    wrapped in a ```json fence, prefixed with prose, or cut off mid-object by
+    max_tokens. Without the truncation salvage, a clipped response fell through
+    to the raw-text path and a 400-char JSON blob got stored as a "perception" —
+    which is both unreadable to the LLM and a direct hallucination source."""
     if not text:
         return {}
+    t = text.strip()
+
+    # ```json ... ``` fences
+    fence = re.search(r"```(?:json)?\s*(.*?)```", t, re.S)
+    if fence:
+        t = fence.group(1).strip()
+
     try:
-        return json.loads(text)
+        obj = json.loads(t)
+        return obj if isinstance(obj, dict) else {}
     except Exception:
         pass
-    m = re.search(r"\{.*\}", text, re.S)
+
+    # Largest brace-delimited span
+    m = re.search(r"\{.*\}", t, re.S)
     if m:
         try:
-            return json.loads(m.group(0))
+            obj = json.loads(m.group(0))
+            return obj if isinstance(obj, dict) else {}
         except Exception:
             pass
-    return {}
+
+    # Truncated output: pull the fields we actually use straight out of the text.
+    out = {}
+    sm = re.search(r'"scene_summary"\s*:\s*"((?:[^"\\]|\\.)*)"', t, re.S)
+    if sm:
+        try:
+            out["scene_summary"] = json.loads(f'"{sm.group(1)}"')
+        except Exception:
+            out["scene_summary"] = sm.group(1)
+    return out
+
+
+def _clean_summary(text: str) -> str:
+    """Last-resort summary from non-JSON output: strip fences/braces so we never
+    hand the brain a wall of syntax."""
+    t = re.sub(r"```(?:json)?", " ", text or "")
+    t = re.sub(r'^\s*[\{\[]', " ", t)
+    t = re.sub(r'"\w+"\s*:', " ", t)
+    t = re.sub(r"[\{\}\[\]\"]", " ", t)
+    return re.sub(r"\s+", " ", t).strip()

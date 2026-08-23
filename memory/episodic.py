@@ -11,7 +11,12 @@ from __future__ import annotations
 import time
 from collections import deque
 from dataclasses import dataclass, field
-from typing import List
+from typing import Iterable, List, Optional
+
+# Dialogue turns are already delivered to the model as native chat messages.
+# Repeating them inside the context block makes models blend old turns into the
+# current answer, so callers can filter them out with `kinds=`.
+DIALOGUE_KINDS = ("utterance", "reply")
 
 
 @dataclass
@@ -39,12 +44,22 @@ class EpisodicBuffer:
         while self._items and (now - self._items[0].ts) > self.window_s:
             self._items.popleft()
 
-    def recent(self, limit: int = 12) -> List[Episode]:
+    def recent(self, limit: int = 12, kinds: Optional[Iterable[str]] = None) -> List[Episode]:
         self._prune()
-        return list(self._items)[-limit:]
+        items = list(self._items)
+        if kinds is not None:
+            allow = set(kinds)
+            items = [e for e in items if e.kind in allow]
+        return items[-limit:]
 
-    def as_context(self, limit: int = 12) -> str:
-        eps = self.recent(limit)
+    def as_context(self, limit: int = 12, kinds: Optional[Iterable[str]] = None,
+                   max_chars: int = 220) -> str:
+        """Render recent episodes as a compact, explicitly time-stamped block.
+
+        `max_chars` truncates individual entries — a raw VLM JSON dump or a long
+        monologue pasted verbatim drowns out the actual question.
+        """
+        eps = self.recent(limit, kinds=kinds)
         if not eps:
             return ""
         lines = []
@@ -52,7 +67,8 @@ class EpisodicBuffer:
             ago = int(e.age())
             tag = {"perception": "SAW", "utterance": "USER", "reply": "YOU",
                    "ambient": "HEARD"}.get(e.kind, e.kind.upper())
-            lines.append(f"[{ago}s ago] {tag}: {e.text}")
+            text = e.text if len(e.text) <= max_chars else e.text[:max_chars].rstrip() + "…"
+            lines.append(f"[{ago}s ago] {tag}: {text}")
         return "\n".join(lines)
 
     def __len__(self) -> int:

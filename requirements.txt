@@ -32,4 +32,11 @@ torch>=2.1                 # Silero VAD + local Whisper (GPU accelerates both)
 # pyttsx3>=2.90             # fully-offline TTS fallback
 # fastembed>=0.3            # fast ONNX embeddings (alt to sentence-transformers)
 # faiss-cpu>=1.8            # scales the vector store beyond ~5k memories
-# gradio>=4.0               # optional live dashboard UI (ui/gradio_app.py)
+
+# ---------------------------------------------------------------------------
+# UI (optional) — the browser demo dashboard: webcam + mic + chat + voice out.
+#   pip install gradio gtts   (then: python ui/gradio_app.py)
+# ---------------------------------------------------------------------------
+# gradio>=6.0               # live multimodal dashboard (ui/gradio_app.py)
+# gtts>=2.5                 # browser voice output (free, no key)
+# click>=8.2                # keep >=8.2 — older click breaks gradio/typer

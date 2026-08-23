@@ -1,0 +1,26 @@
+# ---------------------------------------------------------------------------
+# Deployment dependencies for the WEB console (api/server.py + web/).
+#
+# Deliberately torch-free. The browser does mic capture and speech synthesis,
+# Groq does STT, and the HF router does vision — so nothing in the request path
+# needs a local model. Swapping sentence-transformers for fastembed (ONNX)
+# drops ~3.9GB of torch + CUDA wheels from the image.
+#
+#   EMBEDDING_BACKEND=fastembed   <- set this when deploying with this file
+# ---------------------------------------------------------------------------
+fastapi>=0.115
+uvicorn[standard]>=0.30
+python-multipart>=0.0.9      # multipart uploads (mic clips, camera frames)
+
+groq>=1.1.1                  # LLM + Whisper STT
+openai>=2.0                  # OpenAI-compatible client for the HF vision router
+python-dotenv>=1.0
+numpy>=1.26
+requests>=2.32
+pillow>=10
+opencv-python-headless>=4.9  # headless: no GUI libs needed on a server
+fastembed>=0.3               # ONNX embeddings — no torch
+
+# Optional alternates:
+# google-genai>=1.0          # LLM_PROVIDER=gemini
+# anthropic>=0.40            # LLM_PROVIDER=anthropic

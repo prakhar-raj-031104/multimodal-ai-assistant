@@ -1,0 +1,306 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OPTIC — Multimodal Second-Brain Assistant</title>
+<meta name="description" content="Real-time multimodal assistant that sees, hears and remembers.">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/styles.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='9' fill='none' stroke='%234fe3d0' stroke-width='2.5'/><circle cx='16' cy='16' r='3' fill='%234fe3d0'/></svg>">
+</head>
+<body>
+
+<!-- ================= top status bar ================= -->
+<div class="topbar">
+  <div class="brand"><i class="brand-dot"></i>OPTIC</div>
+  <span class="pill hide-sm"><i class="dot" id="s-link"></i><span id="s-link-t">connecting</span></span>
+  <span class="pill hide-sm">brain <b id="s-model">—</b></span>
+  <span class="pill hide-sm">stt <b id="s-stt">—</b></span>
+  <span class="pill hide-sm">vision <b id="s-vis">—</b></span>
+  <div class="topbar-spacer"></div>
+  <span class="pill">mem <b id="s-mem">0</b></span>
+  <span class="pill hide-sm">ttft <b id="s-ttft">—</b></span>
+</div>
+
+<main>
+
+<!-- ================= hero ================= -->
+<section class="hero">
+  <div class="wrap hero-grid">
+    <div>
+      <div class="eyebrow">Real-time multimodal perception</div>
+      <h1>
+        <span class="line"><span>It sees.</span></span>
+        <span class="line"><span>It hears.</span></span>
+        <span class="line"><span class="grad">It remembers.</span></span>
+      </h1>
+      <p class="lede">
+        An always-on second brain wired to a camera and a microphone. Vision is
+        gated on scene change, speech on voice activity, and memory on whether
+        the question actually needs it — so the answer arrives in under a second
+        and stays grounded in what is really there.
+      </p>
+      <div class="hero-cta">
+        <button class="btn primary" data-scroll-to="#console">Open console</button>
+        <button class="btn" data-scroll-to="#memory">Inspect memory</button>
+        <button class="btn" data-scroll-to="#pipeline">How it works</button>
+      </div>
+      <div class="scroll-cue"><i></i> scroll</div>
+    </div>
+
+    <div class="boot" id="boot">
+      <div class="boot-hdr"><span>SYSTEM BOOT</span><span id="boot-clock">--:--:--</span></div>
+      <div id="boot-lines"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= console ================= -->
+<section id="console">
+  <div class="wrap">
+    <div class="rv">
+      <div class="eyebrow">Live console</div>
+      <h2 class="sec-title">Talk to it.</h2>
+      <p class="sec-sub">
+        Type, or hold the mic and speak. Share your camera and it grounds every
+        answer in what it can actually see — the frame is analysed in the
+        background, so asking never waits on the vision model.
+      </p>
+    </div>
+
+    <div class="console rv">
+      <!-- ---------- left: camera + perception ---------- -->
+      <div class="col">
+        <div class="panel">
+          <div class="panel-hdr">
+            <i class="dot" id="cam-dot"></i>
+            <span class="grow">Optical feed</span>
+            <span id="cam-res">—</span>
+          </div>
+          <div class="panel-body" style="padding:0">
+            <div class="cam-shell off" id="cam-shell">
+              <video id="cam" autoplay playsinline muted></video>
+              <div class="cam-empty">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor" stroke-width="1.4">
+                  <path d="M23 7l-7 5 7 5V7z"/>
+                  <rect x="1" y="5" width="15" height="14" rx="2"/>
+                </svg>
+                sensor offline
+              </div>
+              <div class="hud">
+                <div class="reticle"><span></span><span></span><span></span><span></span></div>
+                <div class="sweep"></div>
+                <div class="tag" id="hud-tag">STANDBY</div>
+                <div class="tag right" id="hud-fps">—</div>
+              </div>
+            </div>
+          </div>
+          <div class="composer" style="border-top:1px solid var(--line)">
+            <button class="btn" id="cam-toggle" style="flex:1">Enable camera</button>
+            <button class="btn" id="cam-look" disabled title="Analyse this frame now">Look now</button>
+          </div>
+        </div>
+
+        <div class="panel" style="flex:1">
+          <div class="panel-hdr">
+            <i class="dot" id="perc-dot"></i>
+            <span class="grow">Perception</span>
+            <span id="perc-age">—</span>
+          </div>
+          <div class="panel-body">
+            <div class="perception" id="perception"><em>No scene analysed yet.</em></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ---------- centre: chat ---------- -->
+      <div class="col">
+        <div class="panel" style="flex:1">
+          <div class="panel-hdr">
+            <i class="dot ok live"></i>
+            <span class="grow">Dialogue</span>
+            <button class="btn" id="btn-voice" style="padding:.2rem .5rem;font-size:10px">Voice on</button>
+            <button class="btn" id="btn-reset" style="padding:.2rem .5rem;font-size:10px">Reset</button>
+          </div>
+
+          <div class="chat" id="chat">
+            <div class="chat-empty" id="chat-empty">
+              awaiting input<br>
+              <kbd>What do you see?</kbd> <kbd>Remember that…</kbd> <kbd>What time is it?</kbd>
+            </div>
+          </div>
+
+          <div class="composer">
+            <div class="level" id="level" hidden>
+              <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+            </div>
+            <input id="input" placeholder="Ask anything — it sees, hears and remembers…"
+                   autocomplete="off" spellcheck="false">
+            <button class="icon-btn" id="btn-mic" title="Hold to speak (or click to toggle)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+                <rect x="9" y="2" width="6" height="12" rx="3"/>
+                <path d="M5 11a7 7 0 0 0 14 0M12 18v4"/>
+              </svg>
+            </button>
+            <button class="icon-btn" id="btn-send" title="Send">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+                <path d="M4 12h15M13 6l6 6-6 6"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ---------- right: telemetry ---------- -->
+      <div class="col col-right">
+        <div class="panel">
+          <div class="panel-hdr"><i class="dot ok"></i><span class="grow">Subsystems</span></div>
+          <div class="panel-body">
+            <div class="rows" id="subsystems">
+              <div class="row"><span class="l">status</span><span class="v off">booting…</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel" style="flex:1">
+          <div class="panel-hdr"><i class="dot ok"></i><span class="grow">Latency</span><span>p50 / p95</span></div>
+          <div class="panel-body">
+            <div class="rows" id="latency">
+              <div class="row"><span class="l">—</span><span class="v off">no samples</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-hdr"><i class="dot ok"></i><span class="grow">Episodic buffer</span></div>
+          <div class="panel-body">
+            <div class="perception" id="episodic" style="max-height:150px"><em>empty</em></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tiles rv">
+      <div class="tile"><div class="n" data-count="0" id="m-ttft">—<small>ms</small></div><div class="l">Time to first token</div></div>
+      <div class="tile"><div class="n" id="m-turns">0</div><div class="l">Turns this session</div></div>
+      <div class="tile"><div class="n" id="m-mem">0</div><div class="l">Durable memories</div></div>
+      <div class="tile"><div class="n" id="m-vlm">0</div><div class="l">Vision calls</div></div>
+      <div class="tile"><div class="n" id="m-saved">0<small>%</small></div><div class="l">Frames gated out</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= memory ================= -->
+<section id="memory">
+  <div class="wrap">
+    <div class="rv">
+      <div class="eyebrow">Long-term store</div>
+      <h2 class="sec-title">What it actually knows.</h2>
+      <p class="sec-sub">
+        Retrieval is the part that decides whether an assistant sounds grounded or
+        deranged. Search a query to see exactly which memories clear the relevance
+        bar — and precisely what text the model receives.
+      </p>
+    </div>
+
+    <div class="mem-grid rv">
+      <div class="panel">
+        <div class="panel-hdr"><i class="dot ok"></i><span class="grow">Retrieval probe</span></div>
+        <div class="panel-body">
+          <div class="mem-search">
+            <input id="mem-q" placeholder="e.g. when is my demo" spellcheck="false">
+            <button class="btn" id="mem-go">Probe</button>
+          </div>
+          <div class="gate" id="mem-gate">
+            <i class="dot"></i><span>run a probe to see the gate decision</span>
+          </div>
+          <div class="mem-list" id="mem-hits"></div>
+          <pre class="ctx" id="mem-ctx" hidden></pre>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-hdr">
+          <i class="dot ok"></i><span class="grow">Durable memories</span>
+          <span id="mem-count">0</span>
+        </div>
+        <div class="panel-body">
+          <div class="mem-list" id="mem-all" style="max-height:420px"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= pipeline ================= -->
+<section id="pipeline">
+  <div class="wrap">
+    <div class="rv">
+      <div class="eyebrow">Architecture</div>
+      <h2 class="sec-title">Four gates between a photon and an answer.</h2>
+      <p class="sec-sub">
+        Every stage exists to throw work away. That is the entire latency and cost
+        story — the model only runs on what survives.
+      </p>
+    </div>
+
+    <div class="pipe">
+      <div class="node rv">
+        <div class="idx">01 / SENSE</div>
+        <h4>Scene-change gate</h4>
+        <p>A perceptual diff of downscaled grayscale plus a colour histogram. A
+           still room sends nothing; the VLM fires only on real change, cutting
+           calls by 10–100×.</p>
+        <i class="bar"></i>
+      </div>
+      <div class="node rv">
+        <div class="idx">02 / HEAR</div>
+        <h4>Voice activity</h4>
+        <p>Silero VAD segments the open mic into utterances, so speech-to-text
+           runs on speech — never on the raw stream, never on silence.</p>
+        <i class="bar"></i>
+      </div>
+      <div class="node rv">
+        <div class="idx">03 / RECALL</div>
+        <h4>Relevance gate</h4>
+        <p>Long-term memory is searched only when the question needs it, and only
+           facts above threshold reach the prompt — each stamped with its age so
+           the past is never reported as the present.</p>
+        <i class="bar"></i>
+      </div>
+      <div class="node rv">
+        <div class="idx">04 / ANSWER</div>
+        <h4>Single-pass stream</h4>
+        <p>One call, tool schemas attached. If no tool is needed the tokens are
+           already streaming — and the browser starts speaking sentence one while
+           the rest is still arriving.</p>
+        <i class="bar"></i>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap foot-grid">
+    <span>OPTIC · multimodal second-brain assistant</span>
+    <span id="foot-stack">—</span>
+    <span id="foot-uptime">uptime —</span>
+  </div>
+</footer>
+
+<div class="toasts" id="toasts"></div>
+
+<!-- Vendored locally: no CDN round-trip, works offline and behind firewalls. -->
+<script src="/assets/vendor/lenis.min.js" defer></script>
+<script src="/assets/vendor/gsap.min.js" defer></script>
+<script src="/assets/vendor/ScrollTrigger.min.js" defer></script>
+<script src="/assets/app.js" defer></script>
+</body>
+</html>

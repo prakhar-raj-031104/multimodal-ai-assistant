@@ -1,0 +1,15 @@
+venv/
+__pycache__/
+**/__pycache__/
+*.pyc
+.git/
+.env
+data/
+*.wav
+*.mp3
+ui/
+backend/
+test_*.py
+assistant.py
+TESTING.md
+*.bak

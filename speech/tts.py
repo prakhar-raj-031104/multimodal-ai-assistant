@@ -133,6 +133,33 @@ class TTS:
             self._stop.clear()
             self._say(text.strip())
 
+    def synthesize_file(self, text: str) -> "str | None":
+        """
+        Render `text` to an audio file and return its path — for the browser UI,
+        which plays audio in the page (unlike spd-say, which plays on the host).
+        gTTS (free, natural) -> pyttsx3 (offline) -> None (text-only).
+        """
+        text = (text or "").strip()
+        if not text:
+            return None
+        import tempfile
+        try:
+            from gtts import gTTS
+            f = tempfile.NamedTemporaryFile(suffix=".mp3", delete=False)
+            gTTS(text=text).save(f.name)
+            return f.name
+        except Exception as e:  # noqa
+            log.debug("gTTS unavailable (%s)", e)
+        if self._pyttsx is not None:
+            try:
+                f = tempfile.NamedTemporaryFile(suffix=".wav", delete=False)
+                self._pyttsx.save_to_file(text, f.name)
+                self._pyttsx.runAndWait()
+                return f.name
+            except Exception:
+                pass
+        return None
+
     # -- dispatch (audio only; text rendering is owned by the caller) -------
     def _say(self, text: str) -> None:
         if self._stop.is_set() or not text:

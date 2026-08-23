@@ -53,14 +53,39 @@ class VectorStore:
                     self._records = [MemoryRecord(**json.loads(l)) for l in f if l.strip()]
                 if self._vecs.shape[0] != len(self._records):
                     log.warning("vector/record mismatch; resetting store")
-                    self._vecs = np.zeros((0, self.dim), dtype=np.float32)
-                    self._records = []
+                    self._reset()
+                elif self._vecs.size and self._vecs.shape[1] != self.dim:
+                    # The embedding backend changed under an existing store
+                    # (e.g. sentence-transformers -> fastembed on deploy).
+                    # Loading it anyway means every search raises a matmul
+                    # shape error on the first question, so archive and restart.
+                    old = self._vecs.shape[1]
+                    self._archive()
+                    log.warning("embedding dim changed %d -> %d; archived the old "
+                                "store and started fresh (re-add memories to "
+                                "re-embed them)", old, self.dim)
+                    self._reset()
                 else:
                     log.info("loaded %d memories", len(self._records))
         except Exception as e:  # noqa
             log.warning("could not load memory store (%s); starting fresh", e)
             self._vecs = np.zeros((0, self.dim), dtype=np.float32)
             self._records = []
+
+    def _reset(self) -> None:
+        self._vecs = np.zeros((0, self.dim), dtype=np.float32)
+        self._records = []
+
+    def _archive(self) -> None:
+        """Move an incompatible store aside rather than overwriting it — the
+        text is still there, and re-embedding it is a choice the user can make."""
+        stamp = time.strftime("%Y%m%d-%H%M%S")
+        for path in (self._vec_path, self._meta_path):
+            if path.exists():
+                try:
+                    path.rename(path.with_suffix(path.suffix + f".{stamp}.bak"))
+                except OSError as e:  # noqa
+                    log.error("could not archive %s: %s", path.name, e)
 
     def _persist(self) -> None:
         try:
@@ -94,6 +119,31 @@ class VectorStore:
         if self._faiss is not None:
             self._faiss.add(vector)
         self._persist()
+
+    def touch(self, record_id: str) -> bool:
+        """Refresh a record's timestamp — used when a duplicate fact is
+        re-observed, so recency reflects the last time we actually saw it."""
+        for r in self._records:
+            if r.id == record_id:
+                r.ts = time.time()
+                self._persist()
+                return True
+        return False
+
+    def delete(self, record_id: str) -> bool:
+        """Remove a memory permanently (bad/expired facts must be evictable)."""
+        for i, r in enumerate(self._records):
+            if r.id == record_id:
+                self._records.pop(i)
+                self._vecs = np.delete(self._vecs, i, axis=0)
+                self._faiss = None  # index no longer matches; rebuild lazily
+                self._persist()
+                self._maybe_faiss()
+                return True
+        return False
+
+    def all(self) -> List[MemoryRecord]:
+        return list(self._records)
 
     def search(self, query_vec: np.ndarray, top_k: int = 5) -> List[tuple]:
         if len(self._records) == 0:

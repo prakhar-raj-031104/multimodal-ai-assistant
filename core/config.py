@@ -106,8 +106,8 @@ class VisionConfig:
     # Only call the VLM when the scene changes by more than this (0..1).
     scene_change_threshold: float = _env_float("VISION_SCENE_CHANGE_THRESHOLD", 0.35)
     base_url: str = _env("VISION_BASE_URL", "https://router.huggingface.co/v1")
-    model: str = _env("VISION_MODEL", "Qwen/Qwen3-VL-8B-Instruct")
-    max_tokens: int = _env_int("VISION_MAX_TOKENS", 600)
+    model: str = _env("VISION_MODEL", "Qwen/Qwen3-VL-30B-A3B-Instruct")
+    max_tokens: int = _env_int("VISION_MAX_TOKENS", 900)
     timeout: float = _env_float("VISION_TIMEOUT", 30.0)
 
 
@@ -120,9 +120,26 @@ class MemoryConfig:
     embedding_dim: int = _env_int("EMBEDDING_DIM", 384)
     # Rolling short-term perception buffer (seconds of "what just happened").
     episodic_window_s: float = _env_float("EPISODIC_WINDOW_S", 120.0)
-    top_k: int = _env_int("MEMORY_TOP_K", 5)
+    top_k: int = _env_int("MEMORY_TOP_K", 3)
     # After this many raw perceptions, consolidate them into a durable summary.
     consolidate_every: int = _env_int("MEMORY_CONSOLIDATE_EVERY", 20)
+
+    # --- retrieval precision (anti-hallucination) -------------------------
+    # Cosine score a stored fact must beat to be shown to the LLM. Loosely
+    # related memories injected as "MEMORY" are the #1 hallucination source,
+    # so this is deliberately strict.
+    relevance_threshold: float = _env_float("MEMORY_RELEVANCE_THRESHOLD", 0.45)
+    # Skip long-term retrieval entirely unless the question actually refers to
+    # the past/personal facts. Set true to always retrieve (legacy behaviour).
+    always_retrieve: bool = _env_bool("MEMORY_ALWAYS_RETRIEVE", False)
+    # A new fact this similar to an existing one is a duplicate -> not stored.
+    dedupe_threshold: float = _env_float("MEMORY_DEDUPE_THRESHOLD", 0.92)
+    # A durable fact older than this (seconds) is labelled as possibly stale.
+    stale_after_s: float = _env_float("MEMORY_STALE_AFTER_S", 86400.0)
+    # Feed the conversation to the LLM as native chat turns only. When False,
+    # utterances/replies are ALSO pasted into the context block (duplication,
+    # which makes models blend old turns into the current answer).
+    exclude_dialogue_from_context: bool = _env_bool("MEMORY_EXCLUDE_DIALOGUE", True)
 
 
 @dataclass
@@ -130,9 +147,9 @@ class LLMConfig:
     # "groq" (free, fast) | "gemini" (free, strong — best free tier) | "anthropic" (Claude, paid)
     provider: str = _env("LLM_PROVIDER", "groq")
     api_key_env: str = "GROQ_API_KEY"
-    model: str = _env("LLM_MODEL", "llama-3.3-70b-versatile")
+    model: str = _env("LLM_MODEL", "openai/gpt-oss-120b")
     # Small/fast model for routing + consolidation (latency-sensitive paths).
-    fast_model: str = _env("LLM_FAST_MODEL", "llama-3.1-8b-instant")
+    fast_model: str = _env("LLM_FAST_MODEL", "openai/gpt-oss-20b")
     # Gemini settings — used when provider == "gemini" (free tier).
     gemini_model: str = _env("GEMINI_MODEL", "gemini-2.5-flash")
     # Anthropic (Claude) settings — used when provider == "anthropic".
@@ -142,6 +159,10 @@ class LLMConfig:
     max_tokens: int = _env_int("LLM_MAX_TOKENS", 1024)
     max_history_turns: int = _env_int("LLM_MAX_HISTORY_TURNS", 8)
     enable_tools: bool = _env_bool("LLM_ENABLE_TOOLS", True)
+    # Reasoning models (gpt-oss, qwen3) think before emitting the first token,
+    # so effort directly sets time-to-first-token — the number the user hears.
+    # "low" measured ~120ms TTFT vs ~490ms at medium. "none" omits the param.
+    reasoning_effort: str = _env("LLM_REASONING_EFFORT", "low")
     # Only treat perceptions newer than this (s) as "what you currently see".
     scene_freshness_s: float = _env_float("SCENE_FRESHNESS_S", 45.0)
 
