@@ -1,0 +1,17 @@
+# Render Blueprint — New > Blueprint > pick this repo. Render builds ./Dockerfile.
+# Secrets are prompted for in the dashboard (sync: false), never stored here.
+services:
+  - type: web
+    name: optic-assistant
+    runtime: docker
+    plan: free            # 512MB RAM, sleeps after 15 min idle. Use "starter" if it OOMs.
+    healthCheckPath: /api/status
+    envVars:
+      - key: GROQ_API_KEY
+        sync: false
+      - key: HF_TOKEN
+        sync: false
+      - key: EMBEDDING_BACKEND
+        value: fastembed
+      - key: MEMORY_DIR
+        value: /tmp/memory      # free tier has no persistent disk; resets on restart
